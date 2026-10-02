@@ -65,7 +65,8 @@ User Question
 ### Prerequisites
 
 - Python 3.11+
-- An OpenAI API key
+- Ollama installed and running locally
+- `qwen2.5:7b` model pulled in Ollama (`ollama pull qwen2.5:7b`)
 
 ### 1. Clone and enter the project
 
@@ -93,8 +94,11 @@ pip install -r backend/requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY=sk-...
 ```
+
+The application runs locally with Ollama and does not require an OpenAI API key. Optionally edit `.env` to configure Ollama settings:
+- `OLLAMA_BASE_URL` (default: `http://localhost:11434`)
+- `OLLAMA_MODEL` (default: `qwen2.5:7b`)
 
 ### 5. Run the server
 
@@ -124,7 +128,7 @@ pytest tests/test_evaluation_suite.py -v
 pytest tests/test_policy_engine.py tests/test_weather.py -v
 ```
 
-> **Note:** Tests mock all external API calls. No real API key is needed to run tests.
+> **Note:** Tests mock all external LLM and weather API calls. No API keys or running Ollama instance are required to run tests.
 
 ---
 
@@ -303,7 +307,7 @@ Restart the server. The new SOP is immediately active.
 ## Technology Stack
 
 - **LangGraph** — graph orchestration with real branching and failure paths
-- **LangChain OpenAI** — intent extraction + response composition (GPT-4o-mini)
+- **LangChain Ollama** — intent extraction + response composition using local `qwen2.5:7b` model via Ollama
 - **Open-Meteo** — free, no-key-required live weather + geocoding API
 - **FastAPI** — async REST API
 - **PyYAML** — external SOP loading
