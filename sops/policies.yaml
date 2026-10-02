@@ -1,0 +1,325 @@
+# SOPs — Standard Operating Procedures for Outdoor Activity Safety
+#
+# Structure rationale:
+#   Each SOP is self-contained enough for a generic policy engine to evaluate it.
+#   No SOP requires special-casing in application code.
+#
+#   Fields:
+#     id          : unique identifier (SOP-NNN)
+#     title       : short human-readable name
+#     category    : wind_safety | precipitation | temperature | general_conditions
+#     severity    : low | moderate | high | critical
+#     activities  : list of activity keywords this SOP applies to
+#     description : free-text explanation of what situation this covers
+#     conditions  : list of condition blocks evaluated against live weather
+#       Each condition block:
+#         field     : weather field name (matches Open-Meteo response key)
+#         operator  : gt | lt | gte | lte | eq | fuzzy
+#         threshold : numeric threshold (omitted for fuzzy conditions)
+#         fuzzy_fn  : (fuzzy only) name of the fuzzy evaluator function
+#     logic       : how conditions combine: any | all  (default: any)
+#     guidance    : safety advice to relay to the user
+#     source      : reference / rationale
+#
+# Fuzzy conditions use named evaluator functions registered in policy_engine.py.
+# Adding a new fuzzy_fn requires adding a Python function, NOT changing the graph.
+#
+# Resolution strategy when multiple SOPs match:
+#   1. Highest severity (critical > high > moderate > low)
+#   2. Most conditions matched
+#   3. Alphabetically by id (deterministic tiebreak)
+
+policies:
+
+  - id: SOP-001
+    title: "High Wind — Cycling Hazard"
+    category: wind_safety
+    severity: high
+    activities:
+      - cycling
+      - biking
+      - riding a bike
+      - mountain biking
+    description: >
+      Strong sustained winds create serious instability for cyclists,
+      especially on open roads and exposed routes.
+    conditions:
+      - field: wind_speed_10m
+        operator: gte
+        threshold: 40
+    logic: any
+    guidance: >
+      Wind speeds are {wind_speed_10m} km/h, which exceeds the safe cycling threshold of 40 km/h.
+      Cycling is NOT recommended. Gusty side-winds can destabilise the bike, reduce control,
+      and increase collision risk. Postpone or choose an indoor alternative.
+    source: "UK Cycling Alliance — Wind Advisory Guidelines"
+
+  - id: SOP-002
+    title: "Storm-Force Wind — All Outdoor Activities"
+    category: wind_safety
+    severity: critical
+    activities:
+      - any
+    description: >
+      Storm-force winds (≥ 70 km/h) present a danger to all outdoor activities including walking.
+    conditions:
+      - field: wind_speed_10m
+        operator: gte
+        threshold: 70
+    logic: any
+    guidance: >
+      Wind speeds of {wind_speed_10m} km/h indicate storm-force conditions.
+      ALL outdoor activities are STRONGLY DISCOURAGED. Falling branches, flying debris,
+      and structural instability pose a life-safety risk. Stay indoors.
+    source: "Beaufort Scale — Force 10+ Advisory"
+
+  - id: SOP-003
+    title: "Heavy Rain — Trail Running / Hiking"
+    category: precipitation
+    severity: high
+    activities:
+      - hiking
+      - trail running
+      - trekking
+      - bushwalking
+    description: >
+      Heavy precipitation (≥ 10 mm/h) saturates trail surfaces, causes flash flooding risk,
+      and severely reduces grip and visibility.
+    conditions:
+      - field: precipitation
+        operator: gte
+        threshold: 10
+    logic: any
+    guidance: >
+      Current precipitation is {precipitation} mm/h — classified as heavy rain.
+      Hiking and trail running are NOT SAFE in these conditions.
+      Trails become slippery, streams may flood, and navigation is impaired.
+      Defer your hike until conditions improve.
+    source: "Mountain Rescue Council — Precipitation Safety Thresholds"
+
+  - id: SOP-004
+    title: "Moderate Rain — Outdoor Running Advisory"
+    category: precipitation
+    severity: moderate
+    activities:
+      - running
+      - jogging
+      - outdoor running
+    description: >
+      Moderate rainfall (2–10 mm/h) makes running surfaces slippery and reduces
+      visibility. Caution is advised.
+    conditions:
+      - field: precipitation
+        operator: gte
+        threshold: 2
+      - field: precipitation
+        operator: lt
+        threshold: 10
+    logic: all
+    guidance: >
+      Current precipitation is {precipitation} mm/h — moderate rain.
+      Running is possible with caution: wear hi-vis clothing, use trail shoes for grip,
+      avoid underpasses and low-lying routes prone to puddle accumulation.
+      If thunderstorm codes are present, seek shelter immediately.
+    source: "Running Safety Coalition — Wet Weather Advisory"
+
+  - id: SOP-005
+    title: "Extreme Heat — All Outdoor Exertion"
+    category: temperature
+    severity: critical
+    activities:
+      - any
+    description: >
+      Temperatures at or above 38 °C place all outdoor exertion into heat-stroke risk territory,
+      particularly combined with high humidity.
+    conditions:
+      - field: temperature_2m
+        operator: gte
+        threshold: 38
+    logic: any
+    guidance: >
+      Current temperature is {temperature_2m} °C, which is in the extreme heat range (≥ 38 °C).
+      Outdoor physical activity is STRONGLY DISCOURAGED. Heat stroke, heat exhaustion,
+      and severe dehydration risks are significant. If you must go outdoors,
+      do so only in early morning or after sunset, carry at least 1 L of water per hour,
+      and avoid direct sunlight.
+    source: "WHO Heat-Health Action Plans — Extreme Heat Advisory"
+
+  - id: SOP-006
+    title: "High Heat — Outdoor Sporting Events Advisory"
+    category: temperature
+    severity: high
+    activities:
+      - outdoor event
+      - sports event
+      - marathon
+      - football
+      - cricket
+      - running event
+    description: >
+      Temperatures 32–37 °C create significant risk for sustained physical exertion
+      at outdoor sporting events.
+    conditions:
+      - field: temperature_2m
+        operator: gte
+        threshold: 32
+      - field: temperature_2m
+        operator: lt
+        threshold: 38
+    logic: all
+    guidance: >
+      Current temperature is {temperature_2m} °C.
+      Outdoor sporting events in this heat require mandatory hydration stations every 2 km/20 min,
+      shaded rest areas, and medical personnel on standby.
+      Participants should reduce exertion by 20–30%, wear light-coloured clothing,
+      and discontinue activity if dizzy or nauseous.
+    source: "Sports Medicine Australia — Hot Weather Guidelines"
+
+  - id: SOP-007
+    title: "Sub-Zero Temperatures — Hypothermia Risk"
+    category: temperature
+    severity: high
+    activities:
+      - any
+    description: >
+      Temperatures below 0 °C require specific cold-weather gear.
+      Prolonged exposure causes hypothermia. Icy surfaces increase fall risk.
+    conditions:
+      - field: temperature_2m
+        operator: lt
+        threshold: 0
+    logic: any
+    guidance: >
+      Current temperature is {temperature_2m} °C — below freezing.
+      Outdoor activities carry hypothermia and frostbite risk.
+      Ensure layered clothing (moisture-wicking base, insulating mid, windproof outer),
+      cover extremities (gloves, hat, thermal socks), and carry emergency heat packs.
+      Watch for ice on surfaces; use traction aids on boots.
+    source: "Wilderness Medicine Society — Cold Injury Prevention"
+
+  - id: SOP-008
+    title: "Low Visibility — Fog Advisory for Cycling / Running"
+    category: general_conditions
+    severity: moderate
+    activities:
+      - cycling
+      - running
+      - jogging
+      - biking
+    description: >
+      Visibility below 1 km due to fog creates significant collision risk for cyclists
+      and runners sharing roads with vehicles.
+    conditions:
+      - field: visibility
+        operator: lt
+        threshold: 1000
+    logic: any
+    guidance: >
+      Current visibility is {visibility} m — reduced by fog or mist.
+      Cycling and running on shared roads pose an elevated collision risk.
+      Use front and rear lights, wear reflective clothing, and prefer off-road routes.
+      If visibility drops below 200 m, postpone activity until conditions clear.
+    source: "Road Safety Authority — Low Visibility Cycling Guide"
+
+  - id: SOP-009
+    title: "UV Index — Outdoor Prolonged Sun Exposure"
+    category: general_conditions
+    severity: moderate
+    activities:
+      - picnic
+      - sunbathing
+      - outdoor lunch
+      - beach
+      - gardening
+      - outdoor sitting
+    description: >
+      UV Index ≥ 6 (High) requires sun protection measures for prolonged outdoor exposure.
+    conditions:
+      - field: uv_index
+        operator: gte
+        threshold: 6
+    logic: any
+    guidance: >
+      Current UV Index is {uv_index} — classified as High or above.
+      Apply SPF 30+ sunscreen, reapply every 2 hours.
+      Wear a wide-brimmed hat, UV-blocking sunglasses, and light long-sleeved clothing.
+      Seek shade between 10 am and 4 pm.
+    source: "WHO Global Solar UV Index — Practical Guide"
+
+  - id: SOP-010
+    title: "General Outing Suitability — Picnic / Casual Outdoor Activity"
+    category: general_conditions
+    severity: low
+    activities:
+      - picnic
+      - walk
+      - stroll
+      - outdoor lunch
+      - family outing
+      - casual outing
+      - day out
+      - outdoor gathering
+    description: >
+      A fuzzy composite assessment for casual outdoor outings.
+      Conditions considered: temperature comfort, low wind, and low precipitation.
+      This SOP is triggered when no severe individual-condition SOP matches,
+      and the user is asking about general outing suitability.
+    conditions:
+      - field: __composite__
+        operator: fuzzy
+        fuzzy_fn: is_good_for_outing
+    logic: any
+    guidance: >
+      {fuzzy_outing_summary}
+    source: "Internal composite comfort assessment (temperature + wind + precipitation)"
+
+  - id: SOP-011
+    title: "Thunderstorm — All Outdoor Activities"
+    category: precipitation
+    severity: critical
+    activities:
+      - any
+    description: >
+      Weather code 95–99 indicates a thunderstorm is occurring or imminent.
+      Lightning strikes are the primary risk for all outdoor activities.
+    conditions:
+      - field: weather_code
+        operator: gte
+        threshold: 95
+    logic: any
+    guidance: >
+      Current weather code {weather_code} indicates active thunderstorm conditions.
+      ALL outdoor activities must be SUSPENDED IMMEDIATELY.
+      Seek substantial shelter (a building or hard-topped vehicle); avoid trees,
+      open fields, hilltops, and bodies of water. Lightning typically strikes
+      the highest point — crouch low if caught in the open.
+    source: "National Weather Service — Thunderstorm Safety Rules"
+
+  - id: SOP-012
+    title: "Snow / Blizzard — Road Cycling and Outdoor Running"
+    category: precipitation
+    severity: critical
+    activities:
+      - cycling
+      - biking
+      - running
+      - jogging
+      - hiking
+    description: >
+      Weather codes 71–77 and 85–86 indicate snowfall or snowstorm conditions.
+      Snow and ice create extreme fall and traction-loss risk.
+    conditions:
+      - field: weather_code
+        operator: gte
+        threshold: 71
+      - field: weather_code
+        operator: lte
+        threshold: 77
+    logic: all
+    guidance: >
+      Current weather code {weather_code} indicates snowfall.
+      Cycling and outdoor running carry extreme traction-loss and hypothermia risk.
+      Activity is NOT RECOMMENDED. If you must travel outdoors, wear insulated
+      waterproof footwear with grip soles, move slowly, and watch for black ice.
+    source: "Winter Road Safety Council — Snow Advisory"
+

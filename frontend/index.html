@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather-Advisory Support Bot</title>
+  <meta name="description" content="Get outdoor activity safety advice powered by live weather data and verified Standard Operating Procedures." />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">⛅</span>
+          <span class="logo-text">WeatherAdvisor</span>
+        </div>
+        <p class="sidebar-tagline">Live weather · Verified SOPs · No guesswork</p>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Try asking:</h3>
+        <ul class="suggestion-list" id="suggestions">
+          <li class="suggestion-chip" data-q="Is it safe to go cycling in London today?">🚴 Cycling in London</li>
+          <li class="suggestion-chip" data-q="Should I take my kids hiking in Denver this afternoon?">🏔️ Hiking with kids in Denver</li>
+          <li class="suggestion-chip" data-q="Is today a good day for a picnic in Paris?">🧺 Picnic in Paris</li>
+          <li class="suggestion-chip" data-q="Is it safe to go running in Dubai right now?">🏃 Running in Dubai</li>
+          <li class="suggestion-chip" data-q="Planning an outdoor marathon event in Phoenix, is it advisable?">🏁 Marathon in Phoenix</li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section session-section">
+        <div class="session-info">
+          <span class="session-label">Session ID:</span>
+          <code id="session-id-display" class="session-id">—</code>
+        </div>
+        <button id="reset-btn" class="btn btn-secondary" aria-label="Start a new chat session">
+          🔄 New Session
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>Powered by Open-Meteo · LangGraph · GPT-4o-mini</p>
+      </div>
+    </aside>
+
+    <!-- Main chat area -->
+    <main class="chat-area">
+      <div class="chat-header">
+        <h1>Outdoor Safety Advisor</h1>
+        <div class="header-status" id="status-indicator">
+          <span class="status-dot online"></span>
+          <span class="status-text">Ready</span>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages" role="log" aria-live="polite">
+        <div class="welcome-message">
+          <div class="welcome-icon">⛅</div>
+          <h2>Welcome to WeatherAdvisor</h2>
+          <p>Ask me whether it's safe to do any outdoor activity — cycling, hiking, running, picnics, and more.</p>
+          <p>I'll check <strong>live weather</strong> at your location and apply verified safety policies to give you a grounded recommendation.</p>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <textarea
+            id="message-input"
+            class="message-input"
+            placeholder="Ask about outdoor activity safety, e.g. 'Is it safe to cycle in Mumbai today?'"
+            rows="1"
+            maxlength="2000"
+            aria-label="Chat message input"
+          ></textarea>
+          <button id="send-btn" class="btn btn-primary send-btn" aria-label="Send message">
+            <span class="send-icon">➤</span>
+          </button>
+        </div>
+        <p class="input-hint">This system only advises based on verified Standard Operating Procedures + live weather data.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
