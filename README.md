@@ -71,7 +71,8 @@ User Question
 ### 1. Clone and enter the project
 
 ```bash
-cd MeddiBuddy_Assig
+git clone https://github.com/dixitshubham93/weather-advisory-support-bot.git
+cd weather-advisory-support-bot
 ```
 
 ### 2. Create a virtual environment
@@ -260,7 +261,7 @@ Returns `{"status": "healthy"}`.
 ### What works well
 - Deterministic policy matching: the numeric condition evaluator is fully testable without LLM
 - Failure handling: all 4 failure branches are explicit and tested
-- SOP extensibility: Case 10 in the evaluation suite proves a new SOP works without code changes
+- SOP extensibility: Case 11 in the evaluation suite proves a new SOP works without code changes
 - Thunderstorm override: CRITICAL severity always wins multi-SOP resolution
 
 ### Limitations
@@ -311,4 +312,4 @@ Restart the server. The new SOP is immediately active.
 - **Open-Meteo** — free, no-key-required live weather + geocoding API
 - **FastAPI** — async REST API
 - **PyYAML** — external SOP loading
-- **Pytest** — test suite (13 evaluation cases + unit tests)
+- **Pytest** — automated unit, integration, and evaluation test suite
