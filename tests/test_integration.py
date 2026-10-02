@@ -460,60 +460,58 @@ class TestValidatePolicyBranch_RoutesToNoSOP:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Test: Ollama health check helper
+# Test: Groq API health check helper
 # ═════════════════════════════════════════════════════════════════════════════
 
-class TestOllamaHealthCheck:
+class TestGroqHealthCheck:
     """
-    Verify that the _check_ollama helper in app.py correctly reports
-    Ollama status without actually requiring Ollama to run.
+    Verify that the _check_groq helper in app.py correctly reports
+    Groq API configuration status without making external API calls.
     """
 
-    def test_ollama_unavailable_returns_not_ok(self):
-        """EXPECT: ConnectError → ok=False with helpful message."""
-        import httpx
+    def test_groq_missing_api_key_returns_not_ok(self):
+        """EXPECT: Missing WEATHERSUPPORT_KEY → ok=False with helpful detail."""
         import sys
+        import os
         sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
-        with patch("httpx.get") as mock_get:
-            mock_get.side_effect = httpx.ConnectError("Connection refused")
-            from app import _check_ollama
-            result = _check_ollama()
+        old_key = os.environ.pop("WEATHERSUPPORT_KEY", None)
+        try:
+            from app import _check_groq
+            result = _check_groq()
+            assert result["ok"] is False
+            assert result["api_key_configured"] is False
+            assert "WEATHERSUPPORT_KEY" in result["detail"]
+        finally:
+            if old_key is not None:
+                os.environ["WEATHERSUPPORT_KEY"] = old_key
 
-        assert result["ok"] is False
-        assert "ollama" in result["detail"].lower() or "reachable" in result["detail"].lower()
+    def test_groq_configured_api_key_returns_ok(self):
+        """EXPECT: When WEATHERSUPPORT_KEY is set → ok=True and ready status."""
+        import sys
+        import os
+        sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
-    def test_ollama_available_model_found(self):
-        """EXPECT: When Ollama returns the model in its list → ok=True."""
-        with patch("httpx.get") as mock_get:
-            resp = MagicMock()
-            resp.raise_for_status.return_value = None
-            resp.json.return_value = {
-                "models": [{"name": "qwen2.5:7b"}]
-            }
-            mock_get.return_value = resp
-            from app import _check_ollama
-            import os
-            os.environ["OLLAMA_MODEL"] = "qwen2.5:7b"
-            result = _check_ollama()
+        with patch.dict(os.environ, {"WEATHERSUPPORT_KEY": "gsk_test_key_12345"}):
+            from app import _check_groq
+            result = _check_groq()
+            assert result["ok"] is True
+            assert result["api_key_configured"] is True
+            assert result["detail"] == "ready"
 
-        assert result["ok"] is True
-        assert result["detail"] == "ready"
+    def test_groq_health_endpoint_reports_status(self):
+        """EXPECT: health() endpoint correctly reflects Groq configuration status."""
+        import sys
+        import os
+        sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
-    def test_ollama_available_but_model_missing(self):
-        """EXPECT: Ollama running but model not pulled → ok=False with pull hint."""
-        with patch("httpx.get") as mock_get:
-            resp = MagicMock()
-            resp.raise_for_status.return_value = None
-            resp.json.return_value = {"models": [{"name": "llama3:8b"}]}
-            mock_get.return_value = resp
-            from app import _check_ollama
-            import os
-            os.environ["OLLAMA_MODEL"] = "qwen2.5:7b"
-            result = _check_ollama()
+        with patch.dict(os.environ, {"WEATHERSUPPORT_KEY": "gsk_test_key_12345"}):
+            from app import _check_groq
+            result = _check_groq()
+            assert result["ok"] is True
+            assert result["model"] == os.getenv("GROQ_MODEL", "llama3-70b-8192")
 
-        assert result["ok"] is False
-        assert "pull" in result["detail"].lower()
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════

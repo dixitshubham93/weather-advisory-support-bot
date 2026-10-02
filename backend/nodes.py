@@ -29,7 +29,7 @@ import logging
 import os
 from typing import Any
 
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from state import BotState
@@ -42,11 +42,14 @@ from policy_engine import (
 logger = logging.getLogger(__name__)
 
 # ── LLM client (shared, initialised once) ─────────────────────────────────────
-# Uses a local Ollama instance — no API key required.
-# Set OLLAMA_BASE_URL and OLLAMA_MODEL in .env to override defaults.
-_llm = ChatOllama(
-    model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
-    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+# Uses Groq API via ChatGroq — requires WEATHERSUPPORT_KEY in .env.
+# Set WEATHERSUPPORT_KEY and GROQ_MODEL in .env to override defaults.
+_groq_api_key = os.getenv("WEATHERSUPPORT_KEY", "")
+_groq_model = os.getenv("GROQ_MODEL", "llama3-70b-8192")
+
+_llm = ChatGroq(
+    model=_groq_model,
+    api_key=_groq_api_key or "not-set",
     temperature=0,
 )
 

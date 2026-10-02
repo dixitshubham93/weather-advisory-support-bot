@@ -194,45 +194,33 @@ async def reset(session_id: str):
     return {"status": "ok", "session_id": session_id}
 
 
-# ── Ollama connectivity helper ────────────────────────────────────────────────────
+# ── Groq API configuration helper ─────────────────────────────────────────────
 
-def _check_ollama() -> dict:
+def _check_groq() -> dict:
     """
-    Ping the Ollama API to confirm it is running and the configured model
-    is available.  Returns a dict with 'ok', 'model', and 'detail' keys.
+    Check that the Groq API configuration (WEATHERSUPPORT_KEY) is set and non-empty.
+    Returns a dict with 'ok', 'model', 'base_url', and 'detail' keys without exposing secrets.
+    """
+    api_key = os.getenv("WEATHERSUPPORT_KEY", "").strip()
+    model = os.getenv("GROQ_MODEL", "llama3-70b-8192")
+    base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com")
 
-    The system returns an honest failure (503) rather than trying to answer
-    without a working LLM.
-    """
-    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    model    = os.getenv("OLLAMA_MODEL",    "qwen2.5:7b")
-    try:
-        resp = httpx.get(f"{base_url}/api/tags", timeout=3.0)
-        resp.raise_for_status()
-        models_available = [m["name"] for m in resp.json().get("models", [])]
-        # Match by prefix so "qwen2.5:7b" matches "qwen2.5:7b-instruct-q4_K_M" etc.
-        model_ok = any(m.startswith(model.split(":")[0]) for m in models_available)
-        return {
-            "ok": model_ok,
-            "model": model,
-            "base_url": base_url,
-            "models_available": models_available,
-            "detail": "ready" if model_ok else f"model '{model}' not found — run: ollama pull {model}",
-        }
-    except httpx.ConnectError:
+    if not api_key:
         return {
             "ok": False,
             "model": model,
             "base_url": base_url,
-            "detail": f"Ollama not reachable at {base_url} — is Ollama running?",
+            "api_key_configured": False,
+            "detail": "WEATHERSUPPORT_KEY environment variable is missing or empty",
         }
-    except Exception as exc:
-        return {
-            "ok": False,
-            "model": model,
-            "base_url": base_url,
-            "detail": f"Ollama check failed: {exc}",
-        }
+
+    return {
+        "ok": True,
+        "model": model,
+        "base_url": base_url,
+        "api_key_configured": True,
+        "detail": "ready",
+    }
 
 
 @app.get("/health")
@@ -240,20 +228,19 @@ async def health():
     """
     Liveness + readiness check.
 
-    Returns HTTP 200 if Ollama is reachable and the configured model is
-    available.  Returns HTTP 503 if Ollama is down — the system will not
-    invent answers without a working LLM.
+    Returns HTTP 200 if WEATHERSUPPORT_KEY is configured.
+    Returns HTTP 503 if WEATHERSUPPORT_KEY is missing.
     """
-    ollama = _check_ollama()
+    groq = _check_groq()
     status = {
-        "status": "healthy" if ollama["ok"] else "degraded",
-        "llm_provider": "ollama",
-        "llm_model": ollama["model"],
-        "llm_base_url": ollama["base_url"],
-        "llm_ready": ollama["ok"],
-        "llm_detail": ollama["detail"],
+        "status": "healthy" if groq["ok"] else "degraded",
+        "llm_provider": "groq",
+        "llm_model": groq["model"],
+        "llm_base_url": groq["base_url"],
+        "llm_ready": groq["ok"],
+        "llm_detail": groq["detail"],
     }
-    if not ollama["ok"]:
+    if not groq["ok"]:
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=503, content=status)
     return status
@@ -261,13 +248,15 @@ async def health():
 
 @app.get("/config")
 async def config():
-    """Return LLM provider configuration (no secrets — Ollama needs none)."""
+    """Return LLM provider configuration (no secrets)."""
+    groq = _check_groq()
     return {
-        "llm_provider": "ollama",
-        "llm_model": os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
-        "llm_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-        "api_key_required": False,
-        "note": "Run `ollama pull qwen2.5:7b` before starting the server.",
+        "llm_provider": "groq",
+        "llm_model": groq["model"],
+        "llm_base_url": groq["base_url"],
+        "api_key_configured": groq["api_key_configured"],
+        "api_key_required": True,
+        "note": "Set WEATHERSUPPORT_KEY in .env before running the server.",
     }
 
 

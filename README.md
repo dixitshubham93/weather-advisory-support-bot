@@ -65,8 +65,7 @@ User Question
 ### Prerequisites
 
 - Python 3.11+
-- Ollama installed and running locally
-- `qwen2.5:7b` model pulled in Ollama (`ollama pull qwen2.5:7b`)
+- A Groq API key configured as `WEATHERSUPPORT_KEY` in `.env`
 
 ### 1. Clone and enter the project
 
@@ -97,9 +96,14 @@ pip install -r backend/requirements.txt
 cp .env.example .env
 ```
 
-The application runs locally with Ollama and does not require an OpenAI API key. Optionally edit `.env` to configure Ollama settings:
-- `OLLAMA_BASE_URL` (default: `http://localhost:11434`)
-- `OLLAMA_MODEL` (default: `qwen2.5:7b`)
+Edit `.env` and set your Groq API key:
+```bash
+WEATHERSUPPORT_KEY=gsk_...
+```
+
+Optionally configure:
+- `GROQ_MODEL` (default: `llama-3.3-70b-versatile`)
+- `GROQ_BASE_URL` (default: `https://api.groq.com/openai/v1`)
 
 ### 5. Run the server
 
@@ -129,7 +133,7 @@ pytest tests/test_evaluation_suite.py -v
 pytest tests/test_policy_engine.py tests/test_weather.py -v
 ```
 
-> **Note:** Tests mock all external LLM and weather API calls. No API keys or running Ollama instance are required to run tests.
+> **Note:** Tests mock all external LLM and weather API calls. No real API key is required to run tests.
 
 ---
 
@@ -308,7 +312,7 @@ Restart the server. The new SOP is immediately active.
 ## Technology Stack
 
 - **LangGraph** — graph orchestration with real branching and failure paths
-- **LangChain Ollama** — intent extraction + response composition using local `qwen2.5:7b` model via Ollama
+- **LangChain Groq** — intent extraction + response composition using Groq (`llama-3.3-70b-versatile`)
 - **Open-Meteo** — free, no-key-required live weather + geocoding API
 - **FastAPI** — async REST API
 - **PyYAML** — external SOP loading
