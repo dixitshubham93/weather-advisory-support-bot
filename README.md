@@ -2,6 +2,12 @@
 
 A chat application that answers outdoor activity safety questions using **live weather data** from Open-Meteo and a controlled set of externally defined Standard Operating Procedures (SOPs).
 
+## Live Demo
+
+**Live App:** https://weather-advisory-support-bot-0gdy.onrender.com/
+
+**GitHub:** https://github.com/dixitshubham93/weather-advisory-support-bot
+
 ## Key Design Principles
 
 - **The LLM never invents safety advice.** Every recommendation is derived from a matched SOP evaluated against actual weather values.
@@ -102,7 +108,7 @@ WEATHERSUPPORT_KEY=gsk_...
 ```
 
 Optionally configure:
-- `GROQ_MODEL` (default: `llama-3.3-70b-versatile`)
+- `GROQ_MODEL` (default: `openai/gpt-oss-20b`)
 - `GROQ_BASE_URL` (default: `https://api.groq.com/openai/v1`)
 
 ### 5. Run the server
@@ -241,6 +247,8 @@ Response:
 }
 ```
 
+> **Note:** The weather values shown in the example response above are illustrative sample values for API documentation purposes, not guaranteed live weather values.
+
 ### `POST /session/reset?session_id=<id>`
 
 Clears session history.
@@ -312,7 +320,7 @@ Restart the server. The new SOP is immediately active.
 ## Technology Stack
 
 - **LangGraph** — graph orchestration with real branching and failure paths
-- **LangChain Groq** — intent extraction + response composition using Groq (`llama-3.3-70b-versatile`)
+- **LangChain Groq** — intent extraction + response composition using Groq (`openai/gpt-oss-20b`)
 - **Open-Meteo** — free, no-key-required live weather + geocoding API
 - **FastAPI** — async REST API
 - **PyYAML** — external SOP loading
